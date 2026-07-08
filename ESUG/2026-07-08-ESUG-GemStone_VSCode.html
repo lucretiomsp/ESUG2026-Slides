@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GemStone at ESUG 2026 — A Modern IDE, Live Python & AI</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2a3240;
+    --ink:#e6edf3; --dim:#9aa7b4; --faint:#6b7684;
+    --accent:#4db8a8;   /* gemstone teal */
+    --accent2:#7aa2ff;  /* python-ish blue */
+    --accent3:#c084fc;  /* AI violet */
+    --accent4:#f0883e;  /* inspector amber */
+    --accent5:#3fb950;  /* packages green */
+    --gold:#e3b341;
+    --code:#0a0e14;
+    --ok:#3fb950;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 80% -10%,#16303050,transparent),
+               radial-gradient(1000px 600px at 0% 100%,#1a284d40,transparent),var(--bg);
+    color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  code,pre,.mono{font-family:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+  /* ---- top bar ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 0;border-bottom:1px solid var(--line);position:sticky;top:0;
+    background:rgba(13,17,23,.82);backdrop-filter:blur(10px);z-index:20}
+  .brand{display:flex;align-items:center;gap:13px;font-weight:700;letter-spacing:.2px}
+  .gem{width:26px;height:26px;transform:rotate(0deg)}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);
+    border:1px solid var(--line);padding:6px 11px;border-radius:999px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 #3fb95080;
+    animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #3fb95070}70%{box-shadow:0 0 0 9px #3fb95000}100%{box-shadow:0 0 0 0 #3fb95000}}
+
+  /* ---- hero ---- */
+  .hero{padding:56px 0 30px;text-align:center}
+  .kicker{color:var(--accent);font-weight:700;letter-spacing:3px;font-size:13px;text-transform:uppercase}
+  h1{font-size:clamp(32px,5vw,58px);line-height:1.05;margin:16px 0 10px;letter-spacing:-1px}
+  h1 .g1{background:linear-gradient(90deg,var(--accent),#8fe3d6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  h1 .g2{background:linear-gradient(90deg,var(--accent2),#b9ccff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--dim);font-size:clamp(16px,2vw,20px);max-width:760px;margin:0 auto}
+  .meta{margin-top:22px;color:var(--faint);font-size:15px}
+  .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .badge{border:1px solid var(--line);background:var(--panel);border-radius:10px;
+    padding:10px 15px;font-size:13px;color:var(--dim)}
+  .badge b{color:var(--ink);font-size:16px;display:block;margin-bottom:1px}
+
+  /* ---- tabs ---- */
+  .tabs{display:flex;gap:9px;justify-content:center;margin:40px 0 30px;flex-wrap:wrap}
+  .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--dim);
+    padding:13px 20px;border-radius:13px;font-size:15px;font-weight:600;transition:.18s;
+    display:flex;align-items:center;gap:10px}
+  .tab:hover{border-color:#3a4557;color:var(--ink)}
+  .tab.active{color:#04120f;border-color:transparent}
+  .tab.t1.active{background:linear-gradient(90deg,var(--accent),#79ddcd);color:#04120f}
+  .tab.t2.active{background:linear-gradient(90deg,var(--accent3),#dcb6ff);color:#1c0a2e}
+  .tab.t3.active{background:linear-gradient(90deg,var(--accent2),#a9c2ff);color:#08122e}
+  .tab.t4.active{background:linear-gradient(90deg,var(--accent4),#f7b27a);color:#2e1503}
+  .tab.t5.active{background:linear-gradient(90deg,var(--accent5),#7ee787);color:#04210c}
+  .tab .n{font-size:12.5px;opacity:.7;font-weight:700}
+
+  .panel{display:none;animation:fade .35s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .lead{display:grid;grid-template-columns:.95fr 1.05fr;gap:26px;align-items:start}
+  @media(max-width:860px){.lead{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 26px}
+  h2{font-size:clamp(23px,3vw,31px);letter-spacing:-.5px;margin-bottom:6px}
+  .tag{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+  .t1 .tag{color:var(--accent)} .t2 .tag{color:var(--accent3)} .t3 .tag{color:var(--accent2)}
+  .t4 .tag{color:var(--accent4)} .t5 .tag{color:var(--accent5)}
+  .card p{color:var(--dim);margin-top:12px}
+  ul.feat{list-style:none;margin-top:18px;display:grid;gap:12px}
+  ul.feat li{padding-left:28px;position:relative;color:var(--ink)}
+  ul.feat li:before{content:"";position:absolute;left:0;top:8px;width:12px;height:12px;
+    border-radius:3px;transform:rotate(45deg)}
+  .t1 ul.feat li:before{background:var(--accent)}
+  .t2 ul.feat li:before{background:var(--accent3)}
+  .t3 ul.feat li:before{background:var(--accent2)}
+  .t4 ul.feat li:before{background:var(--accent4)}
+  .t5 ul.feat li:before{background:var(--accent5)}
+  ul.feat small{display:block;color:var(--faint);font-size:13.5px;margin-top:2px}
+
+  /* ---- video ---- */
+  .videobox{background:var(--code);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .videobox .head{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid #182030;
+    font-size:12.5px;color:var(--faint)}
+  .videobox .head .lbl{margin-left:auto;color:var(--dim);font-weight:600;letter-spacing:.5px}
+  .cdot{width:11px;height:11px;border-radius:50%}
+  .video{position:relative;width:100%;padding-bottom:56.25%;height:0;background:#000}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .vmeta{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid #182030;
+    font-size:13px;color:var(--dim);flex-wrap:wrap}
+  .vmeta .runtime{color:var(--faint)}
+  .vmeta a{margin-left:auto;color:var(--accent2);text-decoration:none;font-weight:600}
+  .vmeta a:hover{text-decoration:underline}
+
+  .note{margin-top:22px;padding:16px 18px;border-left:3px solid var(--gold);
+    background:#1a1710;border-radius:0 10px 10px 0;color:#e9dcb8;font-size:14.5px}
+  .note b{color:var(--gold)}
+
+  .footer{margin:56px 0 40px;padding-top:26px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;color:var(--faint);font-size:14px;flex-wrap:wrap;gap:12px}
+  .hint{position:fixed;bottom:16px;right:18px;font-size:12px;color:var(--faint);
+    border:1px solid var(--line);background:var(--panel);padding:7px 12px;border-radius:8px;opacity:.75}
+  kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:12px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div class="topbar wrap-full">
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;width:100%">
+    <div class="brand">
+      <svg class="gem" viewBox="0 0 100 100"><defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0" stop-color="#79ddcd"/><stop offset="1" stop-color="#3f8fd6"/></linearGradient></defs>
+        <polygon points="50,4 92,34 74,92 26,92 8,34" fill="url(#gg)" opacity=".9"/>
+        <polygon points="50,4 92,34 50,46 8,34" fill="#bff3ea" opacity=".85"/>
+        <polygon points="50,46 92,34 74,92" fill="#2f7fb8" opacity=".7"/>
+      </svg>
+      <span>GemStone&nbsp;<span style="color:var(--faint);font-weight:500">/ GemTalk Systems</span></span>
+    </div>
+    <div class="live"><span class="dot"></span>ESUG 2026 · 30-min session</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="kicker">ESUG 2026 · Conference Session</div>
+    <h1>A modern <span class="g1">GemStone IDE</span>,<br>real <span class="g2">Python</span>, and AI on a live image</h1>
+    <p class="sub">Five short demos in thirty minutes: developing Smalltalk in VS Code, letting an AI explore your data, running genuine Python inside the object database, richer inspectors, and one-click package loading — all against a single live GemStone image.</p>
+    <div class="meta">James Foster · GemTalk Systems · <span class="mono">james.foster@gemtalksystems.com</span></div>
+    <div class="badges">
+      <div class="badge"><b>5</b>live demos</div>
+      <div class="badge"><b>30</b>minutes</div>
+      <div class="badge"><b>3.7.5</b>GemStone/S 64</div>
+      <div class="badge"><b>1</b>image, one object space</div>
+    </div>
+  </section>
+
+  <div class="tabs">
+    <div class="tab t1 active" data-panel="p1"><span class="n">01</span> VS Code IDE</div>
+    <div class="tab t2" data-panel="p2"><span class="n">02</span> AI explores data</div>
+    <div class="tab t3" data-panel="p3"><span class="n">03</span> Python in GemStone</div>
+    <div class="tab t4" data-panel="p4"><span class="n">04</span> Enhanced inspectors</div>
+    <div class="tab t5" data-panel="p5"><span class="n">05</span> Loading packages</div>
+  </div>
+
+  <!-- ============ PANEL 1 ============ -->
+  <section class="panel t1 active" id="p1">
+    <div class="lead">
+      <div class="card">
+        <div class="tag">Demo 01</div>
+        <h2>A GemStone IDE inside VS Code</h2>
+        <p>The Jasper extension turns Visual Studio Code into a full GemStone/S 64 development environment. Browse, edit, compile, debug, and test Smalltalk against a live image — and manage your GemStone infrastructure — without leaving the editor.</p>
+        <ul class="feat">
+          <li>Browse the whole image
+            <small>Dictionaries, class categories, classes, and methods, driven by fast filters.</small></li>
+          <li>Compile &amp; evaluate live
+            <small>Send Smalltalk to the running session and get the real result back — no rebuild.</small></li>
+          <li>Debug and test
+            <small>Step through code and run SUnit classes and methods, inspecting failures inline.</small></li>
+          <li>Manage infrastructure
+            <small>Configure the OS, versions, databases, processes, logins, and sessions from one panel.</small></li>
+        </ul>
+        <div class="note"><b>What to watch for:</b> the Jasper marketplace listing installing, then a live GemStone login from inside VS Code.</div>
+      </div>
+      <div>
+        <div class="videobox">
+          <div class="head"><span class="cdot" style="background:#ff5f56"></span><span class="cdot" style="background:#ffbd2e"></span><span class="cdot" style="background:#27c93f"></span><span class="lbl">Video 01 · VS Code for GemStone</span></div>
+          <div class="video"><iframe src="https://www.youtube.com/embed/yoV4Jk_8em8?start=12" title="Introducing VS Code as an IDE for GemStone" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>
+          <div class="vmeta"><span class="runtime">Starts at 0:12</span><a href="https://youtu.be/yoV4Jk_8em8?t=12" target="_blank" rel="noopener">Open on YouTube ↗</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANEL 2 ============ -->
+  <section class="panel t2" id="p2">
+    <div class="lead">
+      <div class="card">
+        <div class="tag">Demo 02</div>
+        <h2>Let an AI explore your data</h2>
+        <p>Point an AI assistant at the same tools the IDE uses and ask questions of your live object model in plain English. It writes and runs GemStone code, reads back real results, and reasons about them — read-only, so nothing is committed.</p>
+        <ul class="feat">
+          <li>Ask in natural language
+            <small>&ldquo;How many invoices have an amount due in a different currency from the contract?&rdquo;</small></li>
+          <li>Real queries, real objects
+            <small>The agent executes Smalltalk against the image and reports the actual answer.</small></li>
+          <li>Follow-up reasoning
+            <small>Drill into specifics — exchange rates, individual invoices — across turns.</small></li>
+          <li>Safe by default
+            <small>Exploration runs read-only; the agent even flags its own earlier mistakes.</small></li>
+        </ul>
+        <div class="note"><b>What to watch for:</b> the assistant catching a wrong assumption about exchange rates and correcting itself against the data.</div>
+      </div>
+      <div>
+        <div class="videobox">
+          <div class="head"><span class="cdot" style="background:#ff5f56"></span><span class="cdot" style="background:#ffbd2e"></span><span class="cdot" style="background:#27c93f"></span><span class="lbl">Video 02 · AI queries</span></div>
+          <div class="video"><iframe src="https://www.youtube.com/embed/yoV4Jk_8em8?start=104" title="Using AI to explore data in GemStone" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>
+          <div class="vmeta"><span class="runtime">Starts at 1:44</span><a href="https://youtu.be/yoV4Jk_8em8?t=104" target="_blank" rel="noopener">Open on YouTube ↗</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANEL 3 ============ -->
+  <section class="panel t3" id="p3">
+    <div class="lead">
+      <div class="card">
+        <div class="tag">Demo 03</div>
+        <h2>Real Python, inside the object database</h2>
+        <p>Not a bridge to an external interpreter — Python runs <em>in</em> GemStone. Every Python value is a first-class GemStone object, so an <span class="mono">import gemstone</span> lets Python reach straight into the live object model and work with your data directly.</p>
+        <ul class="feat">
+          <li>Python the language, GemStone the runtime
+            <small>Run ordinary Python — including notebooks — against the &ldquo;Grail (GemStone Python)&rdquo; kernel.</small></li>
+          <li>Reach into the image
+            <small><span class="mono">gemstone["InstalledAcmeSystem"]</span> hands Python a live GemStone object.</small></li>
+          <li>Values are GemStone objects
+            <small>No serialization boundary — Python data lives in the same object space as your Smalltalk.</small></li>
+          <li>Shared persistence
+            <small>Anything Python creates can be committed to the repository like any object.</small></li>
+        </ul>
+        <div class="note"><b>What to watch for:</b> a Jupyter cell importing <span class="mono">gemstone</span>, fetching a system object, and counting its invoices — all in Python.</div>
+      </div>
+      <div>
+        <div class="videobox">
+          <div class="head"><span class="cdot" style="background:#ff5f56"></span><span class="cdot" style="background:#ffbd2e"></span><span class="cdot" style="background:#27c93f"></span><span class="lbl">Video 03 · Python runs in GemStone</span></div>
+          <div class="video"><iframe src="https://www.youtube.com/embed/yoV4Jk_8em8?start=429" title="Running Python in GemStone" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>
+          <div class="vmeta"><span class="runtime">Starts at 7:09</span><a href="https://youtu.be/yoV4Jk_8em8?t=429" target="_blank" rel="noopener">Open on YouTube ↗</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANEL 4 ============ -->
+  <section class="panel t4" id="p4">
+    <div class="lead">
+      <div class="card">
+        <div class="tag">Demo 04</div>
+        <h2>Enhanced object inspectors</h2>
+        <p>Inspecting an object should tell you more than its raw slots. Custom inspector views present domain objects the way a person thinks about them — summaries, overviews, and formatted tables — right alongside the raw and meta views.</p>
+        <ul class="feat">
+          <li>Domain-aware tabs
+            <small>Summary, Overview, Contracts, Customer Invoices, Raw, Print, and Meta on one object.</small></li>
+          <li>Readable tables
+            <small>Status, contract, licensee, amounts, and dates laid out like a report, not a slot dump.</small></li>
+          <li>Browser + inspector together
+            <small>Navigate dictionaries and classes, then inspect a live global like <span class="mono">InstalledAcmeSystem</span>.</small></li>
+          <li>Still the real object
+            <small>Every view is a lens on the same live GemStone object, OOP and all.</small></li>
+        </ul>
+        <div class="note"><b>What to watch for:</b> switching an <span class="mono">IMCSystem</span> inspector to its Contracts tab and reading the deal table directly.</div>
+      </div>
+      <div>
+        <div class="videobox">
+          <div class="head"><span class="cdot" style="background:#ff5f56"></span><span class="cdot" style="background:#ffbd2e"></span><span class="cdot" style="background:#27c93f"></span><span class="lbl">Video 04 · Enhanced inspectors</span></div>
+          <div class="video"><iframe src="https://www.youtube.com/embed/a_rrQgasv00" title="Enhanced inspectors in GemStone" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>
+          <div class="vmeta"><span class="runtime">Full clip</span><a href="https://youtu.be/a_rrQgasv00" target="_blank" rel="noopener">Open on YouTube ↗</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANEL 5 ============ -->
+  <section class="panel t5" id="p5">
+    <div class="lead">
+      <div class="card">
+        <div class="tag">Demo 05</div>
+        <h2>Loading packages with Rowan</h2>
+        <p>Bring code into your image without leaving the editor. The GemStone panel manages repositories and Rowan projects, so cloning a repository and loading a project — Seaside, say — is a guided, visible operation.</p>
+        <ul class="feat">
+          <li>Repositories &amp; projects
+            <small>See registered repositories and which Rowan projects are loaded at a glance.</small></li>
+          <li>Load real frameworks
+            <small>Pull in projects like Seaside and HelloSeaside and watch them appear as loaded.</small></li>
+          <li>Sessions in context
+            <small>Logins &amp; sessions, versions, databases, and processes sit right above your projects.</small></li>
+          <li>Track changes
+            <small>The Changes view shows what has moved since load, ready to commit.</small></li>
+        </ul>
+        <div class="note"><b>What to watch for:</b> a Rowan project going from a repository entry to &ldquo;loaded&rdquo; in the Loaded Projects list.</div>
+      </div>
+      <div>
+        <div class="videobox">
+          <div class="head"><span class="cdot" style="background:#ff5f56"></span><span class="cdot" style="background:#ffbd2e"></span><span class="cdot" style="background:#27c93f"></span><span class="lbl">Video 05 · Loading packages</span></div>
+          <div class="video"><iframe src="https://www.youtube.com/embed/BcGNRk0Y5ZI" title="Loading packages in GemStone" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>
+          <div class="vmeta"><span class="runtime">Full clip</span><a href="https://youtu.be/BcGNRk0Y5ZI" target="_blank" rel="noopener">Open on YouTube ↗</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div>ESUG 2026 · GemTalk Systems · five demos, one live <span class="mono">gs64stone</span> image (GemStone/S 64 v3.7.5).</div>
+    <div>James Foster</div>
+  </div>
+</div>
+
+<div class="hint">Press <kbd>1</kbd>–<kbd>5</kbd> or <kbd>←</kbd> <kbd>→</kbd> to switch · <kbd>F</kbd> fullscreen</div>
+
+<script>
+  const order=['p1','p2','p3','p4','p5'];
+  const tabs=[...document.querySelectorAll('.tab')];
+  const panels=Object.fromEntries(order.map(id=>[id,document.getElementById(id)]));
+  function show(id){
+    if(!panels[id]) return;
+    tabs.forEach(t=>t.classList.toggle('active',t.dataset.panel===id));
+    Object.entries(panels).forEach(([k,el])=>el.classList.toggle('active',k===id));
+  }
+  function current(){return order.find(id=>panels[id].classList.contains('active'))||'p1';}
+  tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.panel)));
+  document.addEventListener('keydown',e=>{
+    if(e.key>='1'&&e.key<='5') show('p'+e.key);
+    if(e.key==='ArrowRight'){const i=order.indexOf(current());show(order[Math.min(order.length-1,i+1)]);}
+    if(e.key==='ArrowLeft'){const i=order.indexOf(current());show(order[Math.max(0,i-1)]);}
+    if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+  });
+</script>
+</body>
+</html>
